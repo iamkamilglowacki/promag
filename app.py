@@ -1156,7 +1156,17 @@ def woocommerce_webhook():
         
         # Jeśli payload jest pusty, to test WooCommerce - zwróć OK
         if not payload or len(payload) == 0:
+            logger.info("✅ Pusty payload - test webhooka")
             return jsonify({'message': 'Webhook endpoint is ready'}), 200
+        
+        # Sprawdź Content-Type
+        content_type = request.headers.get('Content-Type', '')
+        logger.info(f"📋 Content-Type: {content_type}")
+        
+        # WooCommerce czasami wysyła form data zamiast JSON podczas testowania
+        if 'application/x-www-form-urlencoded' in content_type or 'webhook_id=' in payload.decode('utf-8', errors='ignore'):
+            logger.info("⚠️  Otrzymano form data (test webhooka) - zwracam OK")
+            return jsonify({'message': 'Webhook test OK - czekam na prawdziwe zamówienie'}), 200
         
         # Weryfikacja podpisu (jeśli skonfigurowano sekret)
         # UWAGA: Weryfikacja jest OPCJONALNA - jeśli nie ma podpisu, webhook i tak zadziała
@@ -1184,6 +1194,7 @@ def woocommerce_webhook():
         
         # Parsuj dane JSON
         data = json.loads(payload)
+        logger.info(f"✅ JSON sparsowany pomyślnie")
         
         # Sprawdź czy to zamówienie ukończone
         order_status = data.get('status')
