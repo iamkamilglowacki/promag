@@ -6,10 +6,22 @@ import os
 import hmac
 import hashlib
 import json
+import logging
 from dotenv import load_dotenv
 
 # Wczytaj zmienne środowiskowe z pliku .env
 load_dotenv()
+
+# Konfiguracja logowania do pliku
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('webhook_debug.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///magazyn.db'
@@ -1127,20 +1139,20 @@ def woocommerce_webhook():
     """
     try:
         # LOGOWANIE - sprawdzenie czy webhook dochodzi
-        print(f"\n{'='*60}")
-        print(f"🔔 WEBHOOK OTRZYMANY: {request.method}")
-        print(f"Headers: {dict(request.headers)}")
-        print(f"{'='*60}\n")
+        logger.info("="*60)
+        logger.info(f"🔔 WEBHOOK OTRZYMANY: {request.method}")
+        logger.info(f"Headers: {dict(request.headers)}")
+        logger.info("="*60)
         
         # Obsługa GET - test WooCommerce
         if request.method == 'GET':
-            print("✅ GET request - zwracam OK")
+            logger.info("✅ GET request - zwracam OK")
             return 'OK', 200
         
         # Pobierz dane z żądania
         payload = request.get_data()
-        print(f"📦 Payload length: {len(payload)} bytes")
-        print(f"📦 Payload preview: {payload[:200] if payload else 'EMPTY'}")
+        logger.info(f"📦 Payload length: {len(payload)} bytes")
+        logger.info(f"📦 Payload preview: {payload[:500] if payload else 'EMPTY'}")
         
         # Jeśli payload jest pusty, to test WooCommerce - zwróć OK
         if not payload or len(payload) == 0:
@@ -1159,16 +1171,16 @@ def woocommerce_webhook():
                 hashlib.sha256
             ).digest().hex()
             
-            print(f"🔐 Weryfikacja podpisu:")
-            print(f"   Otrzymany: {signature[:20]}...")
-            print(f"   Oczekiwany: {expected_signature[:20]}...")
+            logger.info(f"🔐 Weryfikacja podpisu:")
+            logger.info(f"   Otrzymany: {signature[:20]}...")
+            logger.info(f"   Oczekiwany: {expected_signature[:20]}...")
             
             if signature != expected_signature:
-                print(f"❌ Podpis nieprawidłowy!")
+                logger.warning(f"❌ Podpis nieprawidłowy!")
                 # NIE zwracaj błędu - tylko zaloguj ostrzeżenie
-                print(f"⚠️  OSTRZEŻENIE: Podpis nieprawidłowy, ale kontynuuję (tryb deweloperski)")
+                logger.warning(f"⚠️  OSTRZEŻENIE: Podpis nieprawidłowy, ale kontynuuję (tryb deweloperski)")
         else:
-            print(f"ℹ️  Weryfikacja podpisu pominięta (sekret: {bool(wc_secret)}, podpis: {bool(signature)})")
+            logger.info(f"ℹ️  Weryfikacja podpisu pominięta (sekret: {bool(wc_secret)}, podpis: {bool(signature)})")
         
         # Parsuj dane JSON
         data = json.loads(payload)
@@ -1253,13 +1265,13 @@ def woocommerce_webhook():
         }), 200
         
     except json.JSONDecodeError as e:
-        print(f"❌ JSON DECODE ERROR: {str(e)}")
-        print(f"Payload: {payload}")
+        logger.error(f"❌ JSON DECODE ERROR: {str(e)}")
+        logger.error(f"Payload: {payload}")
         return jsonify({'error': 'Nieprawidłowy format JSON'}), 400
     except Exception as e:
-        print(f"❌ WEBHOOK ERROR: {str(e)}")
+        logger.error(f"❌ WEBHOOK ERROR: {str(e)}")
         import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
