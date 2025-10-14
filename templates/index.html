@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Magazynowy - Mieszanki Przypraw</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-box-seam"></i> System Magazynowy
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text" id="currentTime"></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action active" data-tab="dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="surowce">
+                        <i class="bi bi-box"></i> Surowce
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="produkty">
+                        <i class="bi bi-collection"></i> Produkty
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="receptury">
+                        <i class="bi bi-list-ul"></i> Receptury
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="dostawy">
+                        <i class="bi bi-truck"></i> Dostawy
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="produkcja">
+                        <i class="bi bi-gear"></i> Produkcja
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-tab="cykle">
+                        <i class="bi bi-arrow-repeat"></i> Cykle Produkcyjne
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalSurowce">0</h4>
+                                            <p class="mb-0">Surowce</p>
+                                        </div>
+                                        <i class="bi bi-box fs-1"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalProdukty">0</h4>
+                                            <p class="mb-0">Produkty</p>
+                                        </div>
+                                        <i class="bi bi-collection fs-1"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalWartosc">0 zł</h4>
+                                            <p class="mb-0">Wartość magazynu</p>
+                                        </div>
+                                        <i class="bi bi-currency-dollar fs-1"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="lowStock">0</h4>
+                                            <p class="mb-0">Niskie stany</p>
+                                        </div>
+                                        <i class="bi bi-exclamation-triangle fs-1"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="bi bi-clock-history"></i> Ostatnie Działania</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="ostatnieDzialania"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Surowce Tab -->
+                <div id="surowce" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-box"></i> Surowce</h2>
+                        <div>
+                            <button class="btn btn-info me-2" onclick="showHistoriaSurowcow()">
+                                <i class="bi bi-clock-history"></i> Historia
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSurowiecModal">
+                                <i class="bi bi-plus"></i> Dodaj Surowiec
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="surowceSearch" placeholder="Wyszukaj surowiec po nazwie..." onkeyup="filterSurowceTable()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nazwa</th>
+                                            <th id="surowceStanHeader" class="sortable" title="Kliknij aby posortować">Stan (g)</th>
+                                            <th>Cena za gram (zł)</th>
+                                            <th>Wartość (zł)</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="surowceTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produkty Tab -->
+                <div id="produkty" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-collection"></i> Produkty</h2>
+                        <div>
+                            <button class="btn btn-info me-2" onclick="showHistoriaProduktow()">
+                                <i class="bi bi-clock-history"></i> Historia
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProduktModal">
+                                <i class="bi bi-plus-circle"></i> Dodaj Stan Produktu
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> <strong>Wskazówka:</strong> Aby utworzyć nowy produkt, przejdź do zakładki <strong>Receptury</strong> i dodaj produkt z recepturą. Tutaj możesz tylko dodawać stan do istniejących produktów.
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nazwa</th>
+                                            <th>Opis</th>
+                                            <th id="produktyStanHeader" class="sortable" title="Kliknij aby posortować">Stan (szt.)</th>
+                                            <th>Gramatura słoika (g)</th>
+                                            <th>Łącznie (g)</th>
+                                            <th id="produktyMaxProdHeader" class="sortable" title="Kliknij aby posortować">Maks. produkcja (szt.)</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="produktyTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receptury Tab -->
+                <div id="receptury" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-list-ul"></i> Receptury</h2>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createProduktModal">
+                            <i class="bi bi-plus"></i> Utwórz Nowy Produkt
+                        </button>
+                    </div>
+                    <div id="recepturyContainer"></div>
+                </div>
+
+                <!-- Dostawy Tab -->
+                <div id="dostawy" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-truck"></i> Dostawy</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDostawaModal">
+                            <i class="bi bi-plus"></i> Nowa Dostawa
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Surowiec</th>
+                                            <th>Ilość (g)</th>
+                                            <th>Cena całkowita (zł)</th>
+                                            <th>Cena za gram (zł)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dostawyTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produkcja Tab -->
+                <div id="produkcja" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-gear"></i> Produkcja</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProdukcjaModal">
+                            <i class="bi bi-plus"></i> Nowa Produkcja
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Produkt</th>
+                                            <th>Ilość (g)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="produkcjaTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cykle Produkcyjne Tab -->
+                <div id="cykle" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-arrow-repeat"></i> Cykle Produkcyjne</h2>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newCyklModal">
+                            <i class="bi bi-calendar-plus"></i> Zaplanuj Cykl
+                        </button>
+                    </div>
+                    <div id="cykleContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Surowiec Modal -->
+    <div class="modal fade" id="addSurowiecModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj Surowiec</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSurowiecForm">
+                        <div class="mb-3">
+                            <label for="surowiecNazwa" class="form-label">Nazwa</label>
+                            <input type="text" class="form-control" id="surowiecNazwa" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="surowiecStan" class="form-label">Stan początkowy (g)</label>
+                            <input type="number" class="form-control" id="surowiecStan" step="0.1" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="surowiecCena" class="form-label">Cena za gram (zł)</label>
+                            <input type="number" class="form-control" id="surowiecCena" step="0.001" value="0">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="addSurowiec()">Dodaj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Produkt Modal -->
+    <div class="modal fade" id="addProduktModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj Stan Produktu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProduktForm">
+                        <div class="mb-3">
+                            <label for="produktSelect" class="form-label">Wybierz Produkt</label>
+                            <select class="form-select" id="produktSelect" required onchange="onProduktChange()">
+                                <option value="">-- Wybierz produkt z receptury --</option>
+                            </select>
+                            <div class="form-text">Wybierz produkt, który ma zdefiniowaną recepturę</div>
+                        </div>
+                        <div id="produktDetails" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Opis produktu</label>
+                                <p id="produktOpis" class="text-muted"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Gramatura słoika</label>
+                                <p id="produktGramatura" class="fw-bold"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Receptura (na 100g):</label>
+                                <div id="produktReceptura"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="produktIlosc" class="form-label">Ilość do dodania (szt.)</label>
+                                <input type="number" class="form-control" id="produktIlosc" step="1" min="1" value="1" required onchange="calculateSurowce()">
+                                <div class="form-text">Ile słoików chcesz dodać do magazynu</div>
+                            </div>
+                            <div id="produktSurowceInfo" class="alert alert-warning">
+                                <strong><i class="bi bi-exclamation-triangle"></i> Zużycie surowców:</strong>
+                                <div id="produktSurowceList"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="addProduktStan()" id="addProduktBtn" disabled>Dodaj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Produkt Modal (nowy produkt) -->
+    <div class="modal fade" id="createProduktModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Utwórz Nowy Produkt</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createProduktForm">
+                        <div class="mb-3">
+                            <label for="createProduktNazwa" class="form-label">Nazwa produktu</label>
+                            <input type="text" class="form-control" id="createProduktNazwa" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createProduktOpis" class="form-label">Opis</label>
+                            <textarea class="form-control" id="createProduktOpis" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createProduktGramatura" class="form-label">Gramatura słoika (g)</label>
+                            <input type="number" class="form-control" id="createProduktGramatura" step="0.1" value="100" required>
+                            <div class="form-text">Ile gramów mieści jeden słoik</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createProduktKolor" class="form-label">Kolor etykiety</label>
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="color" class="form-control form-control-color" id="createProduktKolor" value="#6c757d" title="Wybierz kolor etykiety">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#dc3545')" style="background-color: #dc3545; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#fd7e14')" style="background-color: #fd7e14; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#ffc107')" style="background-color: #ffc107; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#198754')" style="background-color: #198754; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#0dcaf0')" style="background-color: #0dcaf0; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#0d6efd')" style="background-color: #0d6efd; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#6610f2')" style="background-color: #6610f2; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setProduktColor('#d63384')" style="background-color: #d63384; width: 30px;">&nbsp;</button>
+                                </div>
+                            </div>
+                            <div class="form-text">Wybierz kolor dla łatwiejszego rozpoznawania produktu</div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Po utworzeniu produktu będziesz mógł dodać składniki receptury.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-success" onclick="createNewProdukt()">Utwórz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Dostawa Modal -->
+    <div class="modal fade" id="addDostawaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nowa Dostawa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDostawaForm">
+                        <div class="mb-3">
+                            <label for="dostawa_surowiec" class="form-label">Surowiec</label>
+                            <select class="form-select" id="dostawa_surowiec" required>
+                                <option value="">Wybierz surowiec...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dostawa_ilosc" class="form-label">Ilość (g)</label>
+                            <input type="number" class="form-control" id="dostawa_ilosc" step="0.1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dostawa_cena" class="form-label">Cena całkowita (zł)</label>
+                            <input type="number" class="form-control" id="dostawa_cena" step="0.01" value="0">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="addDostawa()">Dodaj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Produkcja Modal -->
+    <div class="modal fade" id="addProdukcjaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nowa Produkcja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProdukcjaForm">
+                        <div class="mb-3">
+                            <label for="produkcja_produkt" class="form-label">Produkt</label>
+                            <select class="form-select" id="produkcja_produkt" required>
+                                <option value="">Wybierz produkt...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="produkcja_ilosc" class="form-label">Ilość do wyprodukowania (szt.)</label>
+                            <input type="number" class="form-control" id="produkcja_ilosc" step="1" min="1" required>
+                            <div class="form-text">Ilość słoików do wyprodukowania</div>
+                        </div>
+                        <div id="produkcja_info" class="alert alert-info" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="addProdukcja()">Wyprodukuj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historia Surowców Modal -->
+    <div class="modal fade" id="historiaSurowcowModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-clock-history"></i> Historia Zmian - Surowce</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Surowiec</th>
+                                    <th>Operacja</th>
+                                    <th>Zmiana</th>
+                                    <th>Stan przed</th>
+                                    <th>Stan po</th>
+                                    <th>Opis</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historiaSurowcowTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historia Produktów Modal -->
+    <div class="modal fade" id="historiaProduktowModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-clock-history"></i> Historia Zmian - Produkty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Produkt</th>
+                                    <th>Operacja</th>
+                                    <th>Zmiana</th>
+                                    <th>Stan przed</th>
+                                    <th>Stan po</th>
+                                    <th>Opis</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historiaProduktowTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Skladnik Modal -->
+    <div class="modal fade" id="addSkladnikModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj Składnik do Receptury</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSkladnikForm">
+                        <input type="hidden" id="skladnikProduktId">
+                        <div class="mb-3">
+                            <label class="form-label">Produkt</label>
+                            <p id="skladnikProduktNazwa" class="fw-bold"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="skladnikSurowiec" class="form-label">Wybierz Surowiec</label>
+                            <input type="text" class="form-control mb-2" id="skladnikSearch" placeholder="🔍 Wyszukaj surowiec..." onkeyup="filterSurowce()">
+                            <select class="form-select" id="skladnikSurowiec" size="8" required>
+                                <option value="">-- Wybierz surowiec --</option>
+                            </select>
+                            <div class="form-text">Użyj pola wyszukiwania powyżej lub przewiń listę</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="skladnikIlosc" class="form-label">Ilość na 100g produktu (g)</label>
+                            <input type="number" class="form-control" id="skladnikIlosc" step="0.1" min="0.1" required>
+                            <div class="form-text">Ile gramów tego surowca na 100g produktu</div>
+                        </div>
+                        <div id="skladnikSumaInfo" class="alert alert-info" style="display: none;">
+                            <strong>Suma składników:</strong> <span id="skladnikSuma">0</span>g / 100g
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSkladnik()">Dodaj Składnik</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Cykl Modal -->
+    <div class="modal fade" id="newCyklModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Zaplanuj Cykl Produkcyjny</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newCyklForm">
+                        <div class="mb-3">
+                            <label for="cyklNazwa" class="form-label">Nazwa cyklu</label>
+                            <input type="text" class="form-control" id="cyklNazwa" placeholder="np. Produkcja dzienna 01.10.2025" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Produkty do wyprodukowania</label>
+                            <div id="cyklPozycje">
+                                <!-- Pozycje będą dodawane dynamicznie -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addCyklPozycja()">
+                                <i class="bi bi-plus"></i> Dodaj produkt
+                            </button>
+                        </div>
+                        <div id="cyklValidation" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-success" onclick="saveCykl()">Zaplanuj Cykl</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edycja Koloru Etykiety Modal -->
+    <div class="modal fade" id="editKolorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Zmień Kolor Etykiety</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editKolorForm">
+                        <input type="hidden" id="editKolorProduktId">
+                        <div class="mb-3">
+                            <label class="form-label">Produkt</label>
+                            <p id="editKolorProduktNazwa" class="fw-bold fs-5"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editKolorEtykiety" class="form-label">Kolor etykiety</label>
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="color" class="form-control form-control-color" id="editKolorEtykiety" value="#6c757d" title="Wybierz kolor etykiety">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#dc3545')" style="background-color: #dc3545; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#fd7e14')" style="background-color: #fd7e14; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#ffc107')" style="background-color: #ffc107; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#198754')" style="background-color: #198754; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#0dcaf0')" style="background-color: #0dcaf0; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#0d6efd')" style="background-color: #0d6efd; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#6610f2')" style="background-color: #6610f2; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#d63384')" style="background-color: #d63384; width: 30px;">&nbsp;</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditKolorColor('#6c757d')" style="background-color: #6c757d; width: 30px;">&nbsp;</button>
+                                </div>
+                            </div>
+                            <div class="form-text">Wybierz kolor dla łatwiejszego rozpoznawania produktu</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Podgląd:</label>
+                            <div id="editKolorPodglad" class="p-3 rounded text-white text-center fw-bold" style="background-color: #6c757d;">
+                                Przykładowa etykieta
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditKolor()">
+                        <i class="bi bi-check-circle"></i> Zapisz Kolor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Korekta Surowca Modal -->
+    <div class="modal fade" id="korektaSurowiecModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle"></i> Korekta Manualna Stanu Surowca
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> <strong>Uwaga!</strong> Ta funkcja służy do awaryjnej korekty stanu magazynowego. Użyj jej tylko w wyjątkowych sytuacjach.
+                    </div>
+                    <form id="korektaSurowiecForm">
+                        <input type="hidden" id="korektaSurowiecId">
+                        <div class="mb-3">
+                            <label class="form-label">Surowiec</label>
+                            <p id="korektaSurowiecNazwa" class="fw-bold fs-5"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Aktualny stan magazynowy</label>
+                            <p id="korektaSurowiecStanAktualny" class="fw-bold text-primary fs-4"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="korektaSurowiecNowyStan" class="form-label">Nowy stan magazynowy (g)</label>
+                            <input type="number" class="form-control" id="korektaSurowiecNowyStan" min="0" step="0.1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="korektaSurowiecPowod" class="form-label">Powód korekty</label>
+                            <select class="form-select mb-2" id="korektaSurowiecPowodSelect" onchange="updateKorektaSurowiecPowod()">
+                                <option value="">-- Wybierz powód --</option>
+                                <option value="Uszkodzenie/zniszczenie surowca">Uszkodzenie/zniszczenie surowca</option>
+                                <option value="Błąd w inwentaryzacji">Błąd w inwentaryzacji</option>
+                                <option value="Zwrot do dostawcy">Zwrot do dostawcy</option>
+                                <option value="Strata/kradzież">Strata/kradzież</option>
+                                <option value="Korekta po kontroli jakości">Korekta po kontroli jakości</option>
+                                <option value="Dostawa nieujęta w systemie">Dostawa nieujęta w systemie</option>
+                                <option value="Inny">Inny (wpisz poniżej)</option>
+                            </select>
+                            <textarea class="form-control" id="korektaSurowiecPowod" rows="2" placeholder="Opisz powód korekty..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-warning" onclick="saveKorektaSurowiec()">
+                        <i class="bi bi-check-circle"></i> Wykonaj Korektę
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Korekta Produktu Modal -->
+    <div class="modal fade" id="korektaProduktModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle"></i> Korekta Manualna Stanu Produktu
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> <strong>Uwaga!</strong> Ta funkcja służy do awaryjnej korekty stanu magazynowego. Nie sprawdza dostępności surowców i nie odejmuje ich ze stanu.
+                    </div>
+                    <form id="korektaProduktForm">
+                        <input type="hidden" id="korektaProduktId">
+                        <div class="mb-3">
+                            <label class="form-label">Produkt</label>
+                            <p id="korektaProduktNazwa" class="fw-bold fs-5"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Aktualny stan magazynowy</label>
+                            <p id="korektaProduktStanAktualny" class="fw-bold text-primary fs-4"></p>
+                        </div>
+                        <div class="mb-3">
+                            <label for="korektaNowyStan" class="form-label">Nowy stan magazynowy (szt.)</label>
+                            <input type="number" class="form-control" id="korektaNowyStan" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="korektaPowod" class="form-label">Powód korekty</label>
+                            <select class="form-select mb-2" id="korektaPowodSelect" onchange="updateKorektaPowod()">
+                                <option value="">-- Wybierz powód --</option>
+                                <option value="Uszkodzenie produktu">Uszkodzenie produktu</option>
+                                <option value="Błąd w inwentaryzacji">Błąd w inwentaryzacji</option>
+                                <option value="Zwrot od klienta">Zwrot od klienta</option>
+                                <option value="Strata/kradzież">Strata/kradzież</option>
+                                <option value="Produkcja zewnętrzna">Produkcja zewnętrzna</option>
+                                <option value="Inny">Inny (wpisz poniżej)</option>
+                            </select>
+                            <textarea class="form-control" id="korektaPowod" rows="2" placeholder="Opisz powód korekty..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-warning" onclick="saveKorektaProdukt()">
+                        <i class="bi bi-check-circle"></i> Wykonaj Korektę
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal szczegółów surowców -->
+    <div class="modal fade" id="surowceDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="surowceDetailsModalLabel">Szczegóły surowców</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="surowceDetailsContent">
+                    <!-- Zawartość generowana przez JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/table-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

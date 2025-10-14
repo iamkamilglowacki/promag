@@ -1,0 +1,283 @@
+/* Custom styles for the warehouse management system */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.list-group-item.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Hover effect for table rows */
+.table tbody tr {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    cursor: pointer;
+}
+
+.table tbody tr:hover {
+    background-color: #e9ecef !important;
+    transform: scale(1.01);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Darker hover for striped tables */
+.table-striped tbody tr:hover {
+    background-color: #dee2e6 !important;
+}
+
+/* Selected row style */
+.table tbody tr.selected,
+.table-striped tbody tr.selected {
+    background-color: #0d6efd !important;
+    color: white !important;
+    font-weight: 500;
+    transform: none !important;
+}
+
+.table tbody tr.selected td,
+.table-striped tbody tr.selected td {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+.table tbody tr.selected:hover,
+.table-striped tbody tr.selected:hover {
+    background-color: #0b5ed7 !important;
+    transform: none !important;
+}
+
+.table tbody tr.selected:hover td,
+.table-striped tbody tr.selected:hover td {
+    background-color: #0b5ed7 !important;
+}
+
+/* Sortable table headers */
+.table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 25px;
+}
+
+.table th.sortable:hover {
+    background-color: #dee2e6;
+}
+
+.table th.sortable::after {
+    content: '⇅';
+    position: absolute;
+    right: 8px;
+    opacity: 0.3;
+    font-size: 0.9em;
+}
+
+.table th.sortable.asc::after {
+    content: '↑';
+    opacity: 1;
+    color: #0d6efd;
+}
+
+.table th.sortable.desc::after {
+    content: '↓';
+    opacity: 1;
+    color: #0d6efd;
+}
+
+/* Hover effect for list items */
+.list-group-item {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.list-group-item:hover:not(.active) {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+    cursor: pointer;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.receptura-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.receptura-item:hover {
+    background-color: #e9ecef;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.receptura-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.low-stock {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.medium-stock {
+    color: #fd7e14;
+    font-weight: bold;
+}
+
+.good-stock {
+    color: #198754;
+    font-weight: bold;
+}
+
+.progress {
+    height: 0.5rem;
+}
+
+.dashboard-card {
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+.sidebar {
+    position: sticky;
+    top: 1rem;
+    height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        margin-bottom: 1rem;
+    }
+    
+    .container-fluid {
+        padding: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+.loading {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+/* Select styling for better search experience */
+#skladnikSurowiec {
+    font-size: 1rem;
+}
+
+#skladnikSurowiec option {
+    padding: 8px;
+}
+
+/* Make select searchable on mobile */
+select.form-select {
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    appearance: menulist;
+}
+
+.ingredient-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.ingredient-row select,
+.ingredient-row input {
+    flex: 1;
+}
+
+.ingredient-row button {
+    flex-shrink: 0;
+}
