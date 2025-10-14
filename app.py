@@ -212,18 +212,46 @@ class WooCommerceMapowanie(db.Model):
     """Mapowanie produktów WooCommerce na produkty magazynowe"""
     id = db.Column(db.Integer, primary_key=True)
     woocommerce_product_id = db.Column(db.Integer, nullable=False, unique=True)
-    produkt_id = db.Column(db.Integer, db.ForeignKey('produkt.id'), nullable=False)
+    produkt_id = db.Column(db.Integer, db.ForeignKey('produkt.id'), nullable=True)  # NULL dla zestawów
+    jest_zestawem = db.Column(db.Boolean, default=False)  # True jeśli to zestaw produktów
     data_utworzenia = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     produkt = db.relationship('Produkt')
     
     def to_dict(self):
-        return {
+        result = {
             'id': self.id,
             'woocommerce_product_id': self.woocommerce_product_id,
             'produkt_id': self.produkt_id,
-            'produkt_nazwa': self.produkt.nazwa,
+            'jest_zestawem': self.jest_zestawem,
             'data_utworzenia': self.data_utworzenia.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if self.jest_zestawem:
+            # Pobierz produkty w zestawie
+            pozycje = WooCommerceZestawPozycja.query.filter_by(mapowanie_id=self.id).all()
+            result['produkty_w_zestawie'] = [p.to_dict() for p in pozycje]
+        else:
+            result['produkt_nazwa'] = self.produkt.nazwa if self.produkt else None
+        
+        return result
+
+class WooCommerceZestawPozycja(db.Model):
+    """Produkty wchodzące w skład zestawu (np. KuraBox)"""
+    id = db.Column(db.Integer, primary_key=True)
+    mapowanie_id = db.Column(db.Integer, db.ForeignKey('woo_commerce_mapowanie.id'), nullable=False)
+    produkt_id = db.Column(db.Integer, db.ForeignKey('produkt.id'), nullable=False)
+    ilosc = db.Column(db.Integer, default=1)  # ile sztuk tego produktu w zestawie
+    
+    mapowanie = db.relationship('WooCommerceMapowanie', backref='pozycje_zestawu')
+    produkt = db.relationship('Produkt')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'produkt_id': self.produkt_id,
+            'produkt_nazwa': self.produkt.nazwa,
+            'ilosc': self.ilosc
         }
 
 # Inicjalizacja bazy danych
@@ -1222,48 +1250,99 @@ def woocommerce_webhook():
             mapowanie = WooCommerceMapowanie.query.filter_by(
                 woocommerce_product_id=product_id
             ).first()
-            
             if not mapowanie:
                 errors.append(f'Brak mapowania dla produktu WooCommerce #{product_id}')
                 continue
             
-            # Pobierz produkt magazynowy
-            produkt = Produkt.query.get(mapowanie.produkt_id)
-            
-            if not produkt:
-                errors.append(f'Produkt magazynowy nie istnieje (ID: {mapowanie.produkt_id})')
-                continue
-            
-            # Sprawdź dostępność
-            if produkt.stan_magazynowy < quantity:
-                errors.append(
-                    f'{produkt.nazwa}: niewystarczający stan '
-                    f'(zamówiono: {quantity}, dostępne: {produkt.stan_magazynowy})'
+            # Obsługa zestawu produktów (np. KuraBox)
+            if mapowanie.jest_zestawem:
+                logger.info(f"{{ ... }}")
+                pozycje_zestawu = WooCommerceZestawPozycja.query.filter_by(
+                    mapowanie_id=mapowanie.id
+                ).all()
+                
+                if not pozycje_zestawu:
+                    errors.append(f'Zestaw WC #{product_id} nie ma zdefiniowanych produktów')
+                    continue
+                
+                # Przetwórz każdy produkt w zestawie
+                for pozycja in pozycje_zestawu:
+                    produkt = pozycja.produkt
+                    ilosc_w_zestawie = pozycja.ilosc * quantity  # np. 1 produkt * 2 zestawy = 2 produkty
+                    
+                    logger.info(f"  → {produkt.nazwa} x{ilosc_w_zestawie}")
+                    
+                    # Sprawdź dostępność
+                    if produkt.stan_magazynowy < ilosc_w_zestawie:
+                        errors.append(
+                            f'{produkt.nazwa}: niewystarczający stan '
+                            f'(potrzeba: {ilosc_w_zestawie}, dostępne: {produkt.stan_magazynowy})'
+                        )
+                        continue
+                    
+                    # Odejmij ze stanu
+                    stan_przed = produkt.stan_magazynowy
+                    produkt.stan_magazynowy -= ilosc_w_zestawie
+                    stan_po = produkt.stan_magazynowy
+                    
+                    # Zapisz historię
+                    historia = HistoriaProduktow(
+                        produkt_id=produkt.id,
+                        typ_operacji='woocommerce',
+                        zmiana=-ilosc_w_zestawie,
+                        stan_przed=stan_przed,
+                        stan_po=stan_po,
+                        opis=f'Zamówienie WooCommerce #{order_id} - zestaw x{quantity} (zawiera {pozycja.ilosc} szt.)'
+                    )
+                    db.session.add(historia)
+                    
+                    updated_products.append({
+                        'produkt_id': produkt.id,
+                        'nazwa': produkt.nazwa,
+                        'ilosc': ilosc_w_zestawie,
+                        'stan_przed': stan_przed,
+                        'stan_po': stan_po,
+                        'z_zestawu': True
+                    })
+            else:
+                # Pojedynczy produkt
+                produkt = Produkt.query.get(mapowanie.produkt_id)
+                
+                if not produkt:
+                    errors.append(f'Produkt magazynowy nie istnieje (ID: {mapowanie.produkt_id})')
+                    continue
+                
+                # Sprawdź dostępność
+                if produkt.stan_magazynowy < quantity:
+                    errors.append(
+                        f'{produkt.nazwa}: niewystarczający stan '
+                        f'(zamówiono: {quantity}, dostępne: {produkt.stan_magazynowy})'
+                    )
+                    continue
+                
+                # Odejmij ze stanu
+                stan_przed = produkt.stan_magazynowy
+                produkt.stan_magazynowy -= quantity
+                stan_po = produkt.stan_magazynowy
+                
+                # Zapisz historię
+                historia = HistoriaProduktow(
+                    produkt_id=produkt.id,
+                    typ_operacji='woocommerce',
+                    zmiana=-quantity,
+                    stan_przed=stan_przed,
+                    stan_po=stan_po,
+                    opis=f'Zamówienie WooCommerce #{order_id} - sprzedano {quantity} szt.'
                 )
-                continue
-            
-            # Odejmij ze stanu
-            stan_przed = produkt.stan_magazynowy
-            produkt.stan_magazynowy -= quantity
-            stan_po = produkt.stan_magazynowy
-            
-            # Zapisz historię
-            historia = HistoriaProduktow(
-                produkt_id=produkt.id,
-                typ_operacji='woocommerce',
-                zmiana=-quantity,
-                stan_przed=stan_przed,
-                stan_po=stan_po,
-                opis=f'Zamówienie WooCommerce #{order_id} - sprzedano {quantity} szt.'
-            )
-            db.session.add(historia)
-            
-            updated_products.append({
-                'produkt_nazwa': produkt.nazwa,
-                'ilosc': quantity,
-                'stan_przed': stan_przed,
-                'stan_po': stan_po
-            })
+                db.session.add(historia)
+                
+                updated_products.append({
+                    'produkt_id': produkt.id,
+                    'nazwa': produkt.nazwa,
+                    'ilosc': quantity,
+                    'stan_przed': stan_przed,
+                    'stan_po': stan_po
+                })
         
         # Zapisz zmiany
         db.session.commit()
