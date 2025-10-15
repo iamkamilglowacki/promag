@@ -640,7 +640,7 @@ function renderProduktyTable() {
     const tbody = document.getElementById('produktyTable');
     
     if (produkty.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Brak produktów</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Brak produktów</td></tr>';
         return;
     }
     
@@ -662,7 +662,6 @@ function renderProduktyTable() {
                     <input type="checkbox" class="produkt-checkbox" data-produkt-id="${produkt.id}" onchange="updateSprawdzCyklButton()">
                 </td>
                 <td>${produkt.nazwa}</td>
-                <td>${produkt.opis || '-'}</td>
                 <td class="${stockClass}">${produkt.stan_magazynowy}</td>
                 <td>${produkt.gramatura_sloika}g</td>
                 <td>${produkt.stan_w_gramach.toFixed(1)}g</td>
@@ -811,8 +810,17 @@ async function obliczZapotrzebowanieCyklu() {
     
     html += '<h5>Zapotrzebowanie na surowce:</h5>';
     html += '<table class="table table-sm table-bordered">';
-    html += '<thead><tr><th>Surowiec</th><th>Potrzebne</th><th>Dostępne</th><th>Status</th></tr></thead><tbody>';
     
+    // Krótsze nagłówki na mobile
+    const isMobile = window.innerWidth <= 768;
+    const headers = isMobile 
+        ? '<thead><tr><th>Surowiec</th><th>Potrz.</th><th>Dost.</th><th>Status</th></tr></thead>'
+        : '<thead><tr><th>Surowiec</th><th>Potrzebne</th><th>Dostępne</th><th>Status</th></tr></thead>';
+    
+    html += headers + '<tbody>';
+    
+    // Przygotuj dane do sortowania
+    const surowceData = [];
     for (const [surowiecId, potrzebna] of Object.entries(zapotrzebowanie)) {
         const surowiec = surowce.find(s => s.id === parseInt(surowiecId));
         const dostepna = surowiec.stan_magazynowy;
@@ -823,20 +831,50 @@ async function obliczZapotrzebowanieCyklu() {
             mozliwe = false;
         }
         
-        const rowClass = wystarczy ? '' : 'table-danger';
-        const statusBadge = wystarczy 
+        surowceData.push({
+            surowiec,
+            potrzebna,
+            dostepna,
+            wystarczy,
+            brakuje
+        });
+    }
+    
+    // Sortuj: najpierw brakujące (od najbardziej brakującego), potem dostępne
+    surowceData.sort((a, b) => {
+        if (!a.wystarczy && !b.wystarczy) {
+            // Oba brakują - sortuj od największego braku
+            return b.brakuje - a.brakuje;
+        } else if (!a.wystarczy) {
+            // Tylko a brakuje - a na górze
+            return -1;
+        } else if (!b.wystarczy) {
+            // Tylko b brakuje - b na górze
+            return 1;
+        } else {
+            // Oba dostępne - sortuj alfabetycznie
+            return a.surowiec.nazwa.localeCompare(b.surowiec.nazwa);
+        }
+    });
+    
+    // Renderuj posortowane dane
+    surowceData.forEach(data => {
+        const rowClass = data.wystarczy ? '' : 'table-danger';
+        const statusBadge = data.wystarczy 
             ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> OK</span>' 
-            : `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Brakuje ${brakuje.toFixed(1)}g</span>`;
+            : (isMobile 
+                ? `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> -${data.brakuje.toFixed(0)}g</span>`
+                : `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Brakuje ${data.brakuje.toFixed(1)}g</span>`);
         
         html += `
             <tr class="${rowClass}">
-                <td><strong>${surowiec.nazwa}</strong></td>
-                <td>${potrzebna.toFixed(1)}g</td>
-                <td>${dostepna.toFixed(1)}g</td>
+                <td><strong>${data.surowiec.nazwa}</strong></td>
+                <td>${data.potrzebna.toFixed(1)}g</td>
+                <td>${data.dostepna.toFixed(1)}g</td>
                 <td>${statusBadge}</td>
             </tr>
         `;
-    }
+    });
     
     html += '</tbody></table>';
     

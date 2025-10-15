@@ -221,8 +221,154 @@ body {
         padding: 0.5rem;
     }
     
+    /* Tabele na mobile - bardziej konserwatywne wartości */
     .table-responsive {
-        font-size: 0.875rem;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        min-width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.4rem;
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+    
+    /* Nagłówki tabel */
+    .table thead th {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.4rem;
+    }
+    
+    /* Przyciski w tabelach */
+    .table .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Karty dashboard - stack vertically */
+    .card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    /* Nagłówki */
+    h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    h3 {
+        font-size: 1.1rem;
+    }
+    
+    /* Formularze */
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.5rem;
+    }
+    
+    /* Przyciski */
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.75rem;
+    }
+    
+    /* Modal */
+    .modal-body {
+        padding: 0.75rem;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Navbar */
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    /* Lista boczna */
+    .list-group-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Checkboxy - większe dla lepszej obsługi dotykiem */
+    .table input[type="checkbox"],
+    input[type="checkbox"].produkt-checkbox,
+    input[type="checkbox"]#selectAllProdukty {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    /* Badge'e statusu */
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.4rem;
+    }
+    
+    /* Ikony w tabelach */
+    .bi {
+        font-size: 0.85rem;
+    }
+    
+    /* Scrollbar dla tabel */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+}
+
+/* Bardzo małe ekrany (telefony w pionie) - minimalne zmiany */
+@media (max-width: 576px) {
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+    }
+    
+    .table thead th {
+        font-size: 0.75rem;
+    }
+    
+    .table .btn-sm {
+        padding: 0.2rem 0.3rem;
+        font-size: 0.7rem;
     }
 }
 
@@ -288,4 +434,42 @@ input[type="checkbox"]#selectAllProdukty {
     height: 20px;
     cursor: pointer;
     margin: 0;
+}
+
+/* Kompaktowe badge'e na mobile */
+@media (max-width: 768px) {
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.3rem;
+        white-space: nowrap;
+    }
+    
+    .badge .bi {
+        font-size: 0.7rem;
+    }
+    
+    /* Tabela zapotrzebowania - bardzo kompaktowa */
+    .table-bordered th,
+    .table-bordered td {
+        padding: 0.3rem 0.2rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .table-bordered th {
+        font-size: 0.7rem !important;
+        font-weight: 600;
+    }
+    
+    /* Kolumny liczbowe - mniejsza szerokość */
+    .table-bordered td:nth-child(2),
+    .table-bordered td:nth-child(3) {
+        text-align: right;
+        padding-right: 0.3rem !important;
+    }
+    
+    /* Kolumna status - minimize */
+    .table-bordered td:nth-child(4) {
+        padding: 0.2rem !important;
+        text-align: center;
+    }
 }
