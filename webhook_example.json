@@ -1,0 +1,29 @@
+{
+  "id": 456,
+  "status": "completed",
+  "currency": "PLN",
+  "date_created": "2025-10-11T12:00:00",
+  "total": "89.99",
+  "customer_id": 1,
+  "billing": {
+    "first_name": "Jan",
+    "last_name": "Kowalski",
+    "email": "jan@example.com"
+  },
+  "line_items": [
+    {
+      "id": 1,
+      "name": "Przyprawa do kurczaka - KuraLover",
+      "product_id": 123,
+      "quantity": 2,
+      "total": "39.98"
+    },
+    {
+      "id": 2,
+      "name": "Przyprawa do ziemniaków - Ziemniak Rulezzz",
+      "product_id": 456,
+      "quantity": 1,
+      "total": "19.99"
+    }
+  ]
+}

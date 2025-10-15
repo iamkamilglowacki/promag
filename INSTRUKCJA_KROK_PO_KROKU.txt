@@ -1,0 +1,294 @@
+================================================================================
+🛒 INTEGRACJA Z WOOCOMMERCE - INSTRUKCJA KROK PO KROKU
+================================================================================
+
+📍 TWOJA KONFIGURACJA:
+----------------------
+✅ Sekret:     wc_secret_715a8339c6ae64451fca0b5348a57f4a
+✅ Twój IP:    192.168.0.108
+✅ Port:       5001
+✅ URL:        http://192.168.0.108:5001
+
+================================================================================
+KROK 1: KONFIGURACJA WEBHOOKA W WOOCOMMERCE
+================================================================================
+
+1. Zaloguj się do WordPress (panel administracyjny)
+
+2. Przejdź do:
+   WooCommerce → Ustawienia → Zaawansowane → Webhooks
+
+3. Kliknij: "Dodaj webhook"
+
+4. Wypełnij formularz:
+
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ Nazwa:                                                          │
+   │ Magazyn - Aktualizacja stanów                                  │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ Status:                                                         │
+   │ ☑ Aktywny                                                       │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ Temat (Topic):                                                  │
+   │ Order completed  ◄── Wybierz z listy                           │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ URL dostarczenia (Delivery URL):                               │
+   │ http://192.168.0.108:5001/api/woocommerce/webhook              │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ Sekret (Secret):                                                │
+   │ wc_secret_715a8339c6ae64451fca0b5348a57f4a                      │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ Wersja API:                                                     │
+   │ WP REST API Integration v3  ◄── Wybierz z listy               │
+   └─────────────────────────────────────────────────────────────────┘
+
+5. Kliknij: "Zapisz webhook"
+
+================================================================================
+KROK 2: ZNAJDŹ ID PRODUKTÓW WOOCOMMERCE
+================================================================================
+
+W WordPress:
+
+1. Przejdź do: Produkty → Wszystkie produkty
+
+2. Najedź myszką na produkt (NIE KLIKAJ!)
+
+3. W dolnym lewym rogu przeglądarki zobaczysz:
+   post.php?post=123&action=edit
+                  ^^^
+                  To jest ID produktu!
+
+4. Zapisz ID wszystkich produktów, które chcesz synchronizować
+
+   Przykład:
+   - Przyprawa do kurczaka    → ID: 456
+   - Przyprawa do ziemniaków  → ID: 789
+
+================================================================================
+KROK 3: ZNAJDŹ ID PRODUKTÓW MAGAZYNOWYCH
+================================================================================
+
+W terminalu wykonaj:
+
+   curl http://localhost:5001/api/produkty
+
+Zobaczysz listę produktów:
+
+   [
+     {
+       "id": 1,                    ◄── To jest ID magazynowe
+       "nazwa": "KuraLover",
+       "stan_magazynowy": 0
+     },
+     {
+       "id": 2,                    ◄── To jest ID magazynowe
+       "nazwa": "Ziemniak Rulezzz",
+       "stan_magazynowy": 4
+     }
+   ]
+
+Zapisz ID produktów magazynowych.
+
+================================================================================
+KROK 4: DODAJ MAPOWANIA PRODUKTÓW
+================================================================================
+
+METODA A: Użyj skryptu pomocniczego (ŁATWIEJSZE)
+-------------------------------------------------
+
+W terminalu wykonaj:
+
+   ./dodaj_mapowanie.sh
+
+Skrypt pokaże listę produktów i zapyta o ID.
+
+METODA B: Ręcznie przez curl
+-----------------------------
+
+Dla każdego produktu wykonaj:
+
+   curl -X POST http://localhost:5001/api/woocommerce/mapowania \
+     -H "Content-Type: application/json" \
+     -d '{
+       "woocommerce_product_id": 456,
+       "produkt_id": 1
+     }'
+
+Gdzie:
+- 456 = ID produktu w WooCommerce
+- 1   = ID produktu w magazynie
+
+PRZYKŁAD:
+---------
+
+Jeśli masz:
+- WooCommerce: "Przyprawa do kurczaka" (ID: 456)
+- Magazyn:     "KuraLover" (ID: 1)
+
+Wykonaj:
+
+   curl -X POST http://localhost:5001/api/woocommerce/mapowania \
+     -H "Content-Type: application/json" \
+     -d '{"woocommerce_product_id": 456, "produkt_id": 1}'
+
+================================================================================
+KROK 5: SPRAWDŹ MAPOWANIA
+================================================================================
+
+W terminalu wykonaj:
+
+   curl http://localhost:5001/api/woocommerce/mapowania
+
+Powinieneś zobaczyć listę mapowań:
+
+   [
+     {
+       "id": 1,
+       "woocommerce_product_id": 456,
+       "produkt_id": 1,
+       "produkt_nazwa": "KuraLover"
+     }
+   ]
+
+================================================================================
+KROK 6: TESTOWANIE
+================================================================================
+
+TEST 1: Złóż testowe zamówienie
+--------------------------------
+
+1. Otwórz swój sklep WooCommerce
+2. Dodaj produkt do koszyka
+3. Złóż zamówienie
+4. Opłać zamówienie (lub oznacz jako opłacone w panelu)
+5. **WAŻNE:** Oznacz zamówienie jako "Ukończone"
+
+TEST 2: Sprawdź czy stan się zmniejszył
+----------------------------------------
+
+W terminalu wykonaj:
+
+   curl http://localhost:5001/api/produkty
+
+Sprawdź czy stan produktu się zmniejszył!
+
+TEST 3: Sprawdź historię
+-------------------------
+
+W terminalu wykonaj:
+
+   curl http://localhost:5001/api/historia/produkty | head -30
+
+Powinna pojawić się operacja typu "woocommerce":
+
+   {
+     "typ_operacji": "woocommerce",
+     "opis": "Zamówienie WooCommerce #123 - sprzedano 2 szt.",
+     ...
+   }
+
+TEST 4: Sprawdź logi WooCommerce
+---------------------------------
+
+W WordPress:
+WooCommerce → Status → Logi
+
+Wybierz log webhooków i sprawdź czy są błędy.
+
+================================================================================
+🌍 DOSTĘP Z INTERNETU (jeśli sklep jest online)
+================================================================================
+
+Jeśli Twój sklep WooCommerce jest w internecie, a aplikacja magazynowa
+jest lokalna (na Twoim komputerze), musisz udostępnić aplikację w internecie.
+
+OPCJA 1: ngrok (szybkie, do testów)
+------------------------------------
+
+1. Zainstaluj ngrok:
+   brew install ngrok
+
+2. Uruchom tunel:
+   ngrok http 5001
+
+3. Ngrok pokaże publiczny URL, np.:
+   https://abc123.ngrok.io
+
+4. Użyj tego URL w webhooku WooCommerce:
+   https://abc123.ngrok.io/api/woocommerce/webhook
+
+OPCJA 2: Serwer VPS (produkcja)
+--------------------------------
+
+Postaw aplikację na serwerze VPS z publicznym IP i HTTPS.
+
+================================================================================
+🐛 ROZWIĄZYWANIE PROBLEMÓW
+================================================================================
+
+PROBLEM: Webhook nie działa
+----------------------------
+
+✓ Sprawdź czy aplikacja działa:
+  curl http://localhost:5001/api/produkty
+
+✓ Sprawdź logi WooCommerce:
+  WordPress → WooCommerce → Status → Logi
+
+✓ Sprawdź czy sekret jest identyczny w .env i WooCommerce
+
+✓ Sprawdź firewall (port 5001 musi być otwarty)
+
+PROBLEM: Stany się nie aktualizują
+-----------------------------------
+
+✓ Sprawdź mapowania:
+  curl http://localhost:5001/api/woocommerce/mapowania
+
+✓ Sprawdź czy zamówienie ma status "completed" (ukończone)
+
+✓ Sprawdź czy produkt ma wystarczający stan magazynowy
+
+PROBLEM: "Nieprawidłowy podpis"
+--------------------------------
+
+✓ Sprawdź czy sekret w .env jest identyczny z WooCommerce
+✓ Usuń spacje na początku/końcu sekretu
+✓ Uruchom ponownie aplikację (./start.sh)
+
+================================================================================
+📋 PODSUMOWANIE
+================================================================================
+
+✅ Sekret wygenerowany:    wc_secret_715a8339c6ae64451fca0b5348a57f4a
+✅ Aplikacja działa na:    http://192.168.0.108:5001
+✅ Webhook URL:            http://192.168.0.108:5001/api/woocommerce/webhook
+
+CO MUSISZ JESZCZE ZROBIĆ:
+--------------------------
+☐ Skonfigurować webhook w WooCommerce (Krok 1)
+☐ Zmapować produkty (Krok 4)
+☐ Przetestować z zamówieniem (Krok 6)
+
+================================================================================
+📞 POMOC
+================================================================================
+
+Szczegółowa dokumentacja:
+- KONFIGURACJA_SKLEPU.md
+- WOOCOMMERCE_INTEGRATION.md
+- QUICKSTART_WOOCOMMERCE.md
+
+Skrypty pomocnicze:
+- ./dodaj_mapowanie.sh - łatwe dodawanie mapowań
+- ./test_woocommerce_api.sh - testy API
+
+================================================================================
+🎯 GOTOWE!
+================================================================================
+
+Po wykonaniu tych kroków, każde ukończone zamówienie w WooCommerce
+automatycznie odejmie produkty ze stanu magazynowego!
+
+Powodzenia! 🚀
