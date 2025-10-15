@@ -363,9 +363,6 @@ function switchTab(tabName) {
         case 'produkcja':
             loadProdukcja();
             break;
-        case 'cykle':
-            loadCykle();
-            break;
     }
 }
 
@@ -643,7 +640,7 @@ function renderProduktyTable() {
     const tbody = document.getElementById('produktyTable');
     
     if (produkty.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Brak produktów</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Brak produktów</td></tr>';
         return;
     }
     
@@ -661,6 +658,9 @@ function renderProduktyTable() {
         
         html += `
             <tr>
+                <td>
+                    <input type="checkbox" class="produkt-checkbox" data-produkt-id="${produkt.id}" onchange="updateSprawdzCyklButton()">
+                </td>
                 <td>${produkt.nazwa}</td>
                 <td>${produkt.opis || '-'}</td>
                 <td class="${stockClass}">${produkt.stan_magazynowy}</td>
@@ -689,6 +689,166 @@ function renderProduktyTable() {
     if (typeof initRowSelection === 'function') {
         initRowSelection('produktyTable');
     }
+}
+
+// Multi-select functions for cycle checking
+function toggleAllProdukty() {
+    const selectAll = document.getElementById('selectAllProdukty');
+    const checkboxes = document.querySelectorAll('.produkt-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSprawdzCyklButton();
+}
+
+function updateSprawdzCyklButton() {
+    const checkboxes = document.querySelectorAll('.produkt-checkbox:checked');
+    const button = document.getElementById('sprawdzCyklBtn');
+    
+    if (checkboxes.length > 0) {
+        button.style.display = 'inline-block';
+    } else {
+        button.style.display = 'none';
+    }
+}
+
+function sprawdzCyklMulti() {
+    const checkboxes = document.querySelectorAll('.produkt-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        showToast('Błąd', 'Zaznacz przynajmniej jeden produkt', 'error');
+        return;
+    }
+    
+    // Pobierz zaznaczone produkty
+    const selectedProduktIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.produktId));
+    const selectedProdukty = produkty.filter(p => selectedProduktIds.includes(p.id));
+    
+    // Wypełnij modal
+    const container = document.getElementById('cyklMultiProdukty');
+    let html = '<div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Produkt</th><th>Gramatura słoika</th><th>Ilość (szt.)</th></tr></thead><tbody>';
+    
+    selectedProdukty.forEach(produkt => {
+        html += `
+            <tr>
+                <td><strong>${produkt.nazwa}</strong></td>
+                <td>${produkt.gramatura_sloika}g</td>
+                <td>
+                    <input type="number" class="form-control cykl-ilosc-input" data-produkt-id="${produkt.id}" value="15" min="1" step="1">
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    
+    // Wyczyść wynik
+    document.getElementById('cyklMultiWynik').style.display = 'none';
+    document.getElementById('cyklMultiWynik').innerHTML = '';
+    
+    // Pokaż modal
+    const modal = new bootstrap.Modal(document.getElementById('sprawdzCyklMultiModal'));
+    modal.show();
+}
+
+async function obliczZapotrzebowanieCyklu() {
+    const inputs = document.querySelectorAll('.cykl-ilosc-input');
+    const zapotrzebowanie = {}; // {surowiec_id: ilosc_potrzebna}
+    const produktyInfo = [];
+    
+    // Oblicz zapotrzebowanie dla każdego produktu
+    for (const input of inputs) {
+        const produktId = parseInt(input.dataset.produktId);
+        const ilosc = parseInt(input.value) || 0;
+        
+        if (ilosc <= 0) {
+            showToast('Błąd', 'Wszystkie ilości muszą być większe od 0', 'error');
+            return;
+        }
+        
+        const produkt = produkty.find(p => p.id === produktId);
+        const receptury = await apiCall(`receptury/${produktId}`);
+        
+        if (receptury.length === 0) {
+            showToast('Błąd', `Produkt "${produkt.nazwa}" nie ma zdefiniowanej receptury`, 'error');
+            return;
+        }
+        
+        const iloscGramProdukt = ilosc * produkt.gramatura_sloika;
+        
+        produktyInfo.push({
+            nazwa: produkt.nazwa,
+            ilosc: ilosc,
+            gramatura: produkt.gramatura_sloika
+        });
+        
+        for (const receptura of receptury) {
+            const potrzebnaIlosc = (receptura.ilosc_na_100g / 100) * iloscGramProdukt;
+            
+            if (zapotrzebowanie[receptura.surowiec_id]) {
+                zapotrzebowanie[receptura.surowiec_id] += potrzebnaIlosc;
+            } else {
+                zapotrzebowanie[receptura.surowiec_id] = potrzebnaIlosc;
+            }
+        }
+    }
+    
+    // Sprawdź dostępność surowców
+    const wynikContainer = document.getElementById('cyklMultiWynik');
+    let mozliwe = true;
+    let html = '<h5>Podsumowanie produktów:</h5>';
+    html += '<ul class="list-group mb-3">';
+    produktyInfo.forEach(p => {
+        html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+            ${p.nazwa}
+            <span class="badge bg-primary">${p.ilosc} szt. × ${p.gramatura}g = ${(p.ilosc * p.gramatura).toFixed(0)}g</span>
+        </li>`;
+    });
+    html += '</ul>';
+    
+    html += '<h5>Zapotrzebowanie na surowce:</h5>';
+    html += '<table class="table table-sm table-bordered">';
+    html += '<thead><tr><th>Surowiec</th><th>Potrzebne</th><th>Dostępne</th><th>Status</th></tr></thead><tbody>';
+    
+    for (const [surowiecId, potrzebna] of Object.entries(zapotrzebowanie)) {
+        const surowiec = surowce.find(s => s.id === parseInt(surowiecId));
+        const dostepna = surowiec.stan_magazynowy;
+        const wystarczy = dostepna >= potrzebna;
+        const brakuje = Math.max(0, potrzebna - dostepna);
+        
+        if (!wystarczy) {
+            mozliwe = false;
+        }
+        
+        const rowClass = wystarczy ? '' : 'table-danger';
+        const statusBadge = wystarczy 
+            ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> OK</span>' 
+            : `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Brakuje ${brakuje.toFixed(1)}g</span>`;
+        
+        html += `
+            <tr class="${rowClass}">
+                <td><strong>${surowiec.nazwa}</strong></td>
+                <td>${potrzebna.toFixed(1)}g</td>
+                <td>${dostepna.toFixed(1)}g</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+    }
+    
+    html += '</tbody></table>';
+    
+    // Podsumowanie
+    if (mozliwe) {
+        html += '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <strong>Cykl możliwy do wykonania!</strong> Wszystkie surowce są dostępne.</div>';
+    } else {
+        html += '<div class="alert alert-danger"><i class="bi bi-x-circle-fill"></i> <strong>Brak wystarczających surowców!</strong> Uzupełnij brakujące surowce przed rozpoczęciem produkcji.</div>';
+    }
+    
+    wynikContainer.innerHTML = html;
+    wynikContainer.style.display = 'block';
 }
 
 // Receptury functions

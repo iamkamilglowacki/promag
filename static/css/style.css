@@ -40,14 +40,12 @@ body {
 
 /* Hover effect for table rows */
 .table tbody tr {
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease;
     cursor: pointer;
 }
 
 .table tbody tr:hover {
     background-color: #e9ecef !important;
-    transform: scale(1.01);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Darker hover for striped tables */
@@ -280,4 +278,14 @@ select.form-select {
 
 .ingredient-row button {
     flex-shrink: 0;
+}
+
+/* Większe checkboxy w tabelach */
+.table input[type="checkbox"],
+input[type="checkbox"].produkt-checkbox,
+input[type="checkbox"]#selectAllProdukty {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin: 0;
 }

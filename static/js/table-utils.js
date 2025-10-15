@@ -184,11 +184,11 @@ function autoInitSorting() {
     // Surowce - sortowanie po stanie magazynowym (kolumna 1 - Stan (g))
     makeSortable('surowceStanHeader', 'surowceTable', 1, 'number');
     
-    // Produkty - sortowanie po stanie magazynowym (kolumna 2 - Stan (szt.))
-    makeSortable('produktyStanHeader', 'produktyTable', 2, 'number');
+    // Produkty - sortowanie po stanie magazynowym (kolumna 3 - Stan (szt.)) - przesunięte o 1 przez checkbox
+    makeSortable('produktyStanHeader', 'produktyTable', 3, 'number');
     
-    // Produkty - sortowanie po maksymalnej produkcji (kolumna 5 - Maks. produkcja)
-    makeSortable('produktyMaxProdHeader', 'produktyTable', 5, 'number');
+    // Produkty - sortowanie po maksymalnej produkcji (kolumna 6 - Maks. produkcja) - przesunięte o 1 przez checkbox
+    makeSortable('produktyMaxProdHeader', 'produktyTable', 6, 'number');
 }
 
 // Inicjalizacja po załadowaniu DOM

@@ -43,9 +43,6 @@
                     <a href="#" class="list-group-item list-group-item-action" data-tab="produkcja">
                         <i class="bi bi-gear"></i> Produkcja
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action" data-tab="cykle">
-                        <i class="bi bi-arrow-repeat"></i> Cykle Produkcyjne
-                    </a>
                 </div>
             </div>
 
@@ -170,6 +167,9 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2><i class="bi bi-collection"></i> Produkty</h2>
                         <div>
+                            <button class="btn btn-success me-2" id="sprawdzCyklBtn" onclick="sprawdzCyklMulti()" style="display: none;">
+                                <i class="bi bi-arrow-repeat"></i> Sprawdź cykl
+                            </button>
                             <button class="btn btn-info me-2" onclick="showHistoriaProduktow()">
                                 <i class="bi bi-clock-history"></i> Historia
                             </button>
@@ -187,6 +187,9 @@
                                 <table class="table table-striped">
                                     <thead>
                                         <tr>
+                                            <th style="width: 40px;">
+                                                <input type="checkbox" id="selectAllProdukty" onchange="toggleAllProdukty()" title="Zaznacz wszystkie">
+                                            </th>
                                             <th>Nazwa</th>
                                             <th>Opis</th>
                                             <th id="produktyStanHeader" class="sortable" title="Kliknij aby posortować">Stan (szt.)</th>
@@ -269,17 +272,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Cykle Produkcyjne Tab -->
-                <div id="cykle" class="tab-content">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2><i class="bi bi-arrow-repeat"></i> Cykle Produkcyjne</h2>
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newCyklModal">
-                            <i class="bi bi-calendar-plus"></i> Zaplanuj Cykl
-                        </button>
-                    </div>
-                    <div id="cykleContainer"></div>
                 </div>
             </div>
         </div>
@@ -800,6 +792,38 @@
                 </div>
                 <div class="modal-body" id="surowceDetailsContent">
                     <!-- Zawartość generowana przez JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal sprawdzania cyklu dla wielu produktów -->
+    <div class="modal fade" id="sprawdzCyklMultiModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-arrow-repeat"></i> Sprawdź cykl produkcyjny</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Ustaw ilość sztuk do wyprodukowania dla każdego produktu, a następnie sprawdź dostępność surowców.
+                    </div>
+                    <div id="cyklMultiProdukty">
+                        <!-- Produkty będą dodane dynamicznie -->
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-primary" onclick="obliczZapotrzebowanieCyklu()">
+                            <i class="bi bi-calculator"></i> Oblicz zapotrzebowanie
+                        </button>
+                    </div>
+                    <div id="cyklMultiWynik" style="display: none; margin-top: 20px;">
+                        <!-- Wynik będzie wyświetlony tutaj -->
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
