@@ -1365,6 +1365,46 @@ def woocommerce_webhook():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/github/webhook', methods=['POST'])
+def github_webhook():
+    """
+    Endpoint dla GitHub webhook - automatyczne wdrożenie po git push
+    """
+    try:
+        # Pobierz dane z GitHub
+        payload = request.json
+        
+        # Sprawdź czy to push event
+        if request.headers.get('X-GitHub-Event') == 'push':
+            branch = payload.get('ref', '').split('/')[-1]
+            
+            logger.info(f"🔔 GitHub Webhook: Push do brancha {branch}")
+            
+            # Tylko dla brancha main
+            if branch == 'main':
+                logger.info("🚀 Uruchamiam deploy...")
+                
+                # Uruchom skrypt deploy w tle
+                import subprocess
+                subprocess.Popen(['/bin/bash', '/home/u923457281/promag/deploy_from_webhook.sh'])
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Deploy started',
+                    'branch': branch
+                }), 200
+            else:
+                return jsonify({
+                    'status': 'ignored',
+                    'message': f'Branch {branch} ignored (only main triggers deploy)'
+                }), 200
+        
+        return jsonify({'status': 'ok', 'message': 'Event received'}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ GitHub Webhook Error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         create_tables()
