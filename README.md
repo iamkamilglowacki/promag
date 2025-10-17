@@ -2,6 +2,8 @@
 
 Prosty system do obsługi magazynu surowców i produkcji mieszanek przypraw.
 
+🚀 **Automatyczne wdrożenia przez GitHub Webhooks!**
+
 ## Funkcjonalności
 
 - ✅ **Zarządzanie surowcami** - dodawanie, edycja, kontrola stanów
